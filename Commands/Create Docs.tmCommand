@@ -5,37 +5,49 @@
 	<key>beforeRunningCommand</key>
 	<string>nop</string>
 	<key>command</key>
-	<string># Edit this if you'd like to change the default location
-if [ "${TM_PROJECT_DIRECTORY}" == "" ]; then
-	echo "&lt;h3 style="color:red"&gt;JSDoc can only be built for projects, not single files.&lt;/h3&gt;"
-	exit
-fi
+	<string># =================
+# = Configuration =
+# =================
 
-DOCS_DIR="${TM_PROJECT_DIRECTORY}"/docs/cs/jsdoc
+DOCS_DIR = "${TM_PROJECT_DIRECTORY}"/public/javascripts
+CONFIG_FILE = "${TM_BUNDLE_SUPPORT}"/jsdoc.conf
+JSDOC_DIR = "${TM_BUNDLE_SUPPORT}"/jsdoc-toolkit/
+
+# ================
+# = Build JSDocs =
+# ================
+
+# Edit this if you'd like to change the default location
+if [ "${TM_PROJECT_DIRECTORY}" == "" ]; then
+  echo "&lt;h3 style="color:red"&gt;JSDoc can only be built for projects, not single files.&lt;/h3&gt;"
+  exit
+fi
 
 # Confirm the user wants to build docs
 rv=$(CocoaDialog msgbox --text "Building JS Documenation may take a while. Continue?" \
-	--informative-text "JSdocs will be written to this folder: $DOCS_DIR" \
-	 --button1 "Continue" --button2 "Cancel")
+  --informative-text "JSdocs will be written to: $DOCS_DIR" \
+  --button1 "Continue" --button2 "Cancel")
 
 if [ "$rv" == "1" ]; then
+  echo "&lt;h1&gt;Writing JavaScript Documentation&lt;/h1&gt;"
+  echo "&lt;pre style='font-size:10px'&gt;"
 
-	echo "&lt;h1&gt;Writing JavaScript Documentation&lt;/h1&gt;"
-	echo "&lt;pre style='font-size:10px'&gt;"
+  # Make the dir if it doesn't already exist
+  if [ ! -d $DOCS_DIR ]; then
+    mkdir -p $DOCS_DIR
+  fi
+  
+  # Make sure config file exists
+  if [ ! -f CONFIG_FILE ]; then
+    echo "&lt;h3 style="color:red"&gt;Configuration file expected at ${CONFIG_FILE}&lt;/h3&gt;"
+    exit
+  fi
 
-	# Tell perl where to look for support libraries
-	export PERL5LIB="${TM_BUNDLE_SUPPORT}"/JSdoc/
+  # Build the JSDocs
+  "${JSDOC_DIR}/jsrun.sh -c ${CONFIG_FILE} ${DOCS_DIR}"
 
-	# Make the dir if it doesn't already exist
-	if [ ! -d $DOCS_DIR ]; then
-		mkdir -p $DOCS_DIR
-	fi
-
-	# Run jsdoc
-	"${TM_BUNDLE_SUPPORT}"/JSdoc/jsdoc.pl -r -d $DOCS_DIR "${TM_PROJECT_DIRECTORY}"
-
-	echo "&lt;/pre&gt;"
-	echo "&lt;h4&gt;Finished writing docs to &lt;strong&gt;$DOCS_DIR&lt;/strong&gt;&lt;/h4&gt;"
+  echo "&lt;/pre&gt;"
+  echo "&lt;h4&gt;Finished writing docs to &lt;strong&gt;$DOCS_DIR&lt;/strong&gt;&lt;/h4&gt;"
 
 elif [ "$rv" == "2" ]; then
     exit
